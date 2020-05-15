@@ -79,9 +79,11 @@ objects:
             timeoutSeconds: 1
           resources:
             limits:
-              memory: ${MAX_MEMORY}
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
             requests:
-              memory: 512Mi
+              cpu: ${CPU_REQUEST}
+              memory: ${MEMORY_REQUEST}
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /nexus-data
@@ -130,6 +132,9 @@ objects:
   spec:
     port:
       targetPort: 8081-tcp
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
     to:
       kind: Service
       name: ${SERVICE_NAME}
@@ -147,6 +152,26 @@ objects:
       requests:
         storage: ${VOLUME_CAPACITY}
 parameters:
+- description: CPU Limit
+  displayName: Nexus CPU Limit
+  name: CPU_LIMIT
+  value: 500m
+- description: CPU Request
+  displayName: Nexus CPU Request
+  name: CPU_REQUEST
+  value: 200m
+- description: Java Arguments
+  displayName: JAVA_ARGS
+  name: JAVA_ARGS
+  value: -Xms1400m -Xmx1400m -XX:MaxDirectMemorySize=2g
+- description: Memory Limit
+  displayName: Nexus Memory Limit
+  name: MEMORY_LIMIT
+  value: 4200Mi
+- description: Memory Request
+  displayName: Nexus Memory Request
+  name: MEMORY_REQUEST
+  value: 3800Mi
 - displayName: Sonatype Nexus service name
   name: SERVICE_NAME
   required: true
@@ -154,14 +179,9 @@ parameters:
 - displayName: Sonatype Nexus version
   name: NEXUS_VERSION
   required: true
-  value: 3.6.0
+  value: 3.23.0
 - description: Volume space available for Sonatype Nexus e.g. 512Mi, 2Gi
   displayName: Volume Space for Nexus
   name: VOLUME_CAPACITY
   required: true
   value: 2Gi
-- description: Max memory allocated to the Nexus pod
-  displayName: Max Memory
-  name: MAX_MEMORY
-  required: true
-  value: 1Gi

@@ -31,12 +31,8 @@ objects:
     selector:
       deploymentconfig: ${SERVICE_NAME}
     strategy:
-      rollingParams:
-        intervalSeconds: 1
-        maxSurge: 25%
-        maxUnavailable: 0
+      recreateParams:
         timeoutSeconds: 1200
-        updatePeriodSeconds: 1
         post:
           failurePolicy: Abort
           execNewPod:
@@ -45,7 +41,7 @@ objects:
               - "/bin/bash"
               - "-c"
               - "curl -o /tmp/nexus-functions -s https://raw.githubusercontent.com/OpenShiftDemos/nexus/master/scripts/nexus-functions; source /tmp/nexus-functions; add_nexus3_redhat_repos admin admin123 http://${SERVICE_NAME}:8081"
-      type: Rolling
+      type: Recreate
     template:
       metadata:
         labels:
@@ -83,9 +79,11 @@ objects:
             timeoutSeconds: 1
           resources:
             limits:
-              memory: ${MAX_MEMORY}
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
             requests:
-              memory: 512Mi
+              cpu: ${CPU_REQUEST}
+              memory: ${MEMORY_REQUEST}
           terminationMessagePath: /dev/termination-log
           volumeMounts:
           - mountPath: /nexus-data
@@ -131,6 +129,9 @@ objects:
       app: ${SERVICE_NAME}
     name: ${SERVICE_NAME}
   spec:
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
     port:
       targetPort: 8081-tcp
     to:
@@ -138,16 +139,31 @@ objects:
       name: ${SERVICE_NAME}
       weight: 100
 parameters:
-- displayName: Sonatype Nexus Service Name
+- description: CPU Limit
+  displayName: Nexus CPU Limit
+  name: CPU_LIMIT
+  value: 500m
+- description: CPU Request
+  displayName: Nexus CPU Request
+  name: CPU_REQUEST
+  value: 200m
+- description: Java Arguments
+  displayName: JAVA_ARGS
+  name: JAVA_ARGS
+  value: -Xms1400m -Xmx1400m -XX:MaxDirectMemorySize=2g
+- description: Memory Limit
+  displayName: Nexus Memory Limit
+  name: MEMORY_LIMIT
+  value: 4200Mi
+- description: Memory Request
+  displayName: Nexus Memory Request
+  name: MEMORY_REQUEST
+  value: 3800Mi
+- displayName: Sonatype Nexus service name
   name: SERVICE_NAME
   required: true
   value: nexus
 - displayName: Sonatype Nexus version
   name: NEXUS_VERSION
   required: true
-  value: 3.6.0
-- description: Max memory allocated to the Nexus pod
-  displayName: Max Memory
-  name: MAX_MEMORY
-  required: true
-  value: 1Gi
+  value: 3.23.0
